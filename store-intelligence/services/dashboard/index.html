@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purplle Store Intelligence - Brigade Bangalore</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --purplle-purple: #8B2FC9;
+            --purplle-dark: #1a1a2e;
+            --purplle-gray: #2d2d44;
+            --text-light: #ffffff;
+            --text-muted: #a0a0b0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--purplle-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--purplle-purple), #6b21a8);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .container {
+            padding: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-card {
+            background: var(--purplle-gray);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border-left: 4px solid var(--purplle-purple);
+        }
+        
+        .metric-card h3 {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+        
+        .metric-card .subtext {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+        
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chart-card {
+            background: var(--purplle-gray);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        
+        .chart-card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .zones-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .zones-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .zone-heatmap {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .zone-box {
+            background: var(--purplle-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .zone-box.high {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .zone-box.medium {
+            border-color: var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        .zone-box.low {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .zone-box .zone-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        
+        .zone-box .zone-count {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .event-feed {
+            background: var(--purplle-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+        }
+        
+        .event-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--purplle-gray);
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .event-item:last-child {
+            border-bottom: none;
+        }
+        
+        .event-type {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.625rem;
+        }
+        
+        .event-type.ENTRY { background: var(--success); }
+        .event-type.EXIT { background: var(--danger); }
+        .event-type.ZONE_ENTER { background: var(--purplle-purple); }
+        .event-type.DWELL { background: var(--warning); }
+        
+        .anomalies-panel {
+            background: var(--purplle-gray);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        
+        .anomalies-panel h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .anomaly-badge {
+            background: var(--danger);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .anomaly-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .anomaly-item {
+            background: var(--purplle-dark);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .anomaly-item.MEDIUM {
+            border-left-color: var(--warning);
+        }
+        
+        .anomaly-item.LOW {
+            border-left-color: var(--purplle-purple);
+        }
+        
+        .anomaly-item .anomaly-type {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .anomaly-item .anomaly-desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .anomaly-item .anomaly-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: var(--text-muted);
+        }
+        
+        .spinner {
+            border: 3px solid var(--purplle-gray);
+            border-top-color: var(--purplle-purple);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏪 Purplle Store Intelligence</h1>
+        <div class="status">
+            <div class="status-dot" id="connectionStatus"></div>
+            <span id="connectionText">Connected</span>
+            <span style="margin-left: 1rem; color: var(--text-muted);">ST1008 · Brigade_Bangalore</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Row 1: Metric Cards -->
+        <div class="metrics-row">
+            <div class="metric-card">
+                <h3>Footfall Today</h3>
+                <div class="value" id="footfallValue">--</div>
+                <div class="subtext" id="footfallSubtext">Unique visitors</div>
+            </div>
+            <div class="metric-card">
+                <h3>Conversion Rate</h3>
+                <div class="value" id="conversionValue">--%</div>
+                <div class="subtext" id="conversionSubtext">Visitors who purchased</div>
+            </div>
+            <div class="metric-card">
+                <h3>Avg Dwell Time</h3>
+                <div class="value" id="dwellValue">--</div>
+                <div class="subtext" id="dwellSubtext">Minutes per visitor</div>
+            </div>
+            <div class="metric-card">
+                <h3>Live in Store</h3>
+                <div class="value" id="liveValue">--</div>
+                <div class="subtext" id="liveSubtext">Current occupancy</div>
+            </div>
+        </div>
+        
+        <!-- Row 2: Charts -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <h3>Hourly Footfall</h3>
+                <div class="chart-container">
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Conversion Funnel</h3>
+                <div class="chart-container">
+                    <canvas id="funnelChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 3: Zones + Live Feed -->
+        <div class="zones-row">
+            <div class="chart-card">
+                <h3>Zone Heatmap</h3>
+                <div class="zone-heatmap" id="zoneHeatmap">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Live Event Feed</h3>
+                <div class="event-feed" id="eventFeed">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 4: Anomalies -->
+        <div class="anomalies-panel">
+            <h3>
+                🔔 Active Anomalies
+                <span class="anomaly-badge" id="anomalyCount">0</span>
+            </h3>
+            <div class="anomaly-list" id="anomalyList">
+                <div class="loading" style="height: 100px;"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const WS_URL = 'ws://localhost:8000/ws/live';
+        
+        let ws = null;
+        let hourlyChartInstance = null;
+        let funnelChartInstance = null;
+        let eventsBuffer = [];
+        
+        // Initialize WebSocket connection
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+            
+            ws.onopen = () => {
+                document.getElementById('connectionStatus').style.background = '#10b981';
+                document.getElementById('connectionText').textContent = 'Connected';
+                console.log('WebSocket connected');
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('connectionStatus').style.background = '#ef4444';
+                document.getElementById('connectionText').textContent = 'Disconnected';
+                console.log('WebSocket disconnected, reconnecting...');
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+        }
+        
+        function handleWebSocketMessage(data) {
+            if (data.type === 'event') {
+                addEventToFeed(data.data);
+            } else if (data.type === 'anomaly') {
+                loadAnomalies();
+            } else if (data.type === 'metrics_update') {
+                updateMetricsCards(data.data);
+            }
+        }
+        
+        function addEventToFeed(eventData) {
+            eventsBuffer.unshift(eventData);
+            if (eventsBuffer.length > 20) eventsBuffer.pop();
+            renderEventFeed();
+        }
+        
+        function renderEventFeed() {
+            const feed = document.getElementById('eventFeed');
+            feed.innerHTML = eventsBuffer.map(evt => `
+                <div class="event-item">
+                    <span>${evt.event_type} · ${evt.person_id} · ${evt.zone_id}</span>
+                    <span class="event-type ${evt.event_type}">${evt.event_type}</span>
+                </div>
+            `).join('');
+        }
+        
+        async function loadMetrics() {
+            try {
+                const response = await fetch(`${API_BASE}/metrics`);
+                const data = await response.json();
+                updateMetricsCards(data);
+                return data;
+            } catch (error) {
+                console.error('Failed to load metrics:', error);
+                return null;
+            }
+        }
+        
+        function updateMetricsCards(data) {
+            if (!data) return;
+            
+            document.getElementById('footfallValue').textContent = data.footfall?.unique_visitors || '--';
+            document.getElementById('footfallSubtext').textContent = `Total: ${data.footfall?.total_entries || 0} | Re-entries: ${data.footfall?.re_entries || 0}`;
+            
+            const convRate = ((data.conversion?.rate || 0) * 100).toFixed(1);
+            document.getElementById('conversionValue').textContent = `${convRate}%`;
+            document.getElementById('conversionSubtext').textContent = `${data.conversion?.visitors_who_purchased || 0} of ${data.footfall?.unique_visitors || 0} visitors`;
+            
+            document.getElementById('dwellValue').textContent = `${Math.round(data.dwell_time?.avg_minutes || 0)}m`;
+            document.getElementById('dwellSubtext').textContent = `Median: ${Math.round(data.dwell_time?.median_minutes || 0)}m`;
+            
+            // Calculate live occupancy from zone counts
+            const liveCount = Object.values(data.zone_popularity || {}).reduce((sum, z) => sum + (z.current_occupancy || 0), 0);
+            document.getElementById('liveValue').textContent = liveCount || '--';
+            document.getElementById('liveSubtext').textContent = `Peak: ${data.footfall?.peak_hour ? `Hour ${data.footfall.peak_hour}` : '--'}`;
+        }
+        
+        async function loadFunnel() {
+            try {
+                const response = await fetch(`${API_BASE}/funnel`);
+                const data = await response.json();
+                renderFunnelChart(data);
+            } catch (error) {
+                console.error('Failed to load funnel:', error);
+            }
+        }
+        
+        function renderFunnelChart(data) {
+            const ctx = document.getElementById('funnelChart').getContext('2d');
+            const stages = data.stages || [];
+            
+            if (funnelChartInstance) {
+                funnelChartInstance.destroy();
+            }
+            
+            funnelChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: stages.map(s => s.label),
+                    datasets: [{
+                        label: 'Customers',
+                        data: stages.map(s => s.count),
+                        backgroundColor: 'rgba(139, 47, 201, 0.7)',
+                        borderColor: '#8B2FC9',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw} customers (${stages[ctx.dataIndex].pct}%)`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#a0a0b0' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#a0a0b0' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function loadHourlyData() {
+            try {
+                const metrics = await loadMetrics();
+                if (!metrics) return;
+                
+                const ctx = document.getElementById('hourlyChart').getContext('2d');
+                const hourly = metrics.footfall?.hourly_breakdown || {};
+                const hours = Object.keys(hourly).sort((a,b) => parseInt(a)-parseInt(b));
+                const values = hours.map(h => hourly[h]);
+                
+                if (hourlyChartInstance) {
+                    hourlyChartInstance.destroy();
+                }
+                
+                hourlyChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: hours.map(h => `${h}:00`),
+                        datasets: [{
+                            label: 'Entries',
+                            data: values,
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#a0a0b0' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: { color: '#a0a0b0' }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to load hourly data:', error);
+            }
+        }
+        
+        async function loadZones() {
+            try {
+                const response = await fetch(`${API_BASE}/zones`);
+                const zones = await response.json();
+                renderZoneHeatmap(zones);
+            } catch (error) {
+                console.error('Failed to load zones:', error);
+            }
+        }
+        
+        function renderZoneHeatmap(zones) {
+            const container = document.getElementById('zoneHeatmap');
+            const zoneNames = {
+                entrance: 'Entrance',
+                makeup: 'Makeup',
+                skincare: 'Skincare',
+                hair: 'Hair',
+                fragrance: 'Fragrance',
+                personal_care: 'Personal Care',
+                checkout: 'Checkout'
+            };
+            
+            container.innerHTML = zones.map(zone => {
+                const count = zone.metrics?.current_occupancy || 0;
+                let level = 'low';
+                if (count >= 5) level = 'high';
+                else if (count >= 2) level = 'medium';
+                
+                return `
+                    <div class="zone-box ${level}">
+                        <div class="zone-name">${zoneNames[zone.zone_id] || zone.zone_id}</div>
+                        <div class="zone-count">${count}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        async function loadAnomalies() {
+            try {
+                const response = await fetch(`${API_BASE}/anomalies?severity=all&limit=10`);
+                const data = await response.json();
+                renderAnomalies(data.anomalies || []);
+                document.getElementById('anomalyCount').textContent = data.total || 0;
+            } catch (error) {
+                console.error('Failed to load anomalies:', error);
+            }
+        }
+        
+        function renderAnomalies(anomalies) {
+            const container = document.getElementById('anomalyList');
+            
+            if (anomalies.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No active anomalies</div>';
+                return;
+            }
+            
+            container.innerHTML = anomalies.map(anomaly => `
+                <div class="anomaly-item ${anomaly.severity}">
+                    <div class="anomaly-type">${anomaly.type} · <span style="font-size: 0.75rem; opacity: 0.7;">${anomaly.severity}</span></div>
+                    <div class="anomaly-desc">${anomaly.description}</div>
+                    <div class="anomaly-time">${new Date(anomaly.detected_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+        
+        async function refreshAll() {
+            await Promise.all([
+                loadMetrics(),
+                loadFunnel(),
+                loadHourlyData(),
+                loadZones(),
+                loadAnomalies()
+            ]);
+        }
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            connectWebSocket();
+            refreshAll();
+            
+            // Refresh charts every 60 seconds
+            setInterval(refreshAll, 60000);
+        });
+    </script>
+</body>
+</html>
